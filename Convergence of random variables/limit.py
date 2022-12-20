@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from math import exp, sqrt, pi,factorial
+import matplotlib.pyplot as plt
 
 def Cnk(k, n):
     return factorial(n) / (factorial(n-k) * factorial(k))
@@ -169,19 +170,22 @@ def checkCPT(N, raspred, inputStr = ""):
 
 
 #gause(inputString="10 0 3")
-print(checkMathEx(1000, binominal))
+#(checkMathEx(1000, binominal))
 
-#MathEx(binominal, "10 0.5")
+#print(MathEx(binominal, "10 0.5"))
 
 #binominal(returnProbs =  False, inputString="3 0.1")
 #gistograma(2, binominal, "10 0.5")
 #gistograma(5, gause, "10 0 20")
 #gause(inputString="10 0 20")
-#sum(ravnomernoe(inputString="10 0 9", returnProbs=True)[0])
+
+#print(sum(ravnomernoe(inputString="10 0 9", returnProbs=True)[0]))
 
 
 #gistograma(4, binominal, "100 0.7")
+
 #binominal(inputString="100 0.7")
 
 
-#checkCPT(1000, binominal, "1000 0.5")
+#checkCPT(1000, binominal, "100 0.5")
+plt.show()
