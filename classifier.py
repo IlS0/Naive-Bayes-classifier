@@ -1,86 +1,95 @@
 import re
-import math
+from math import log
 
-spamCnt = 0
+
+# счётчик писем
 lettersCnt = 0
-wordDict = dict() #словарь формата {слово : [кол-во встреч в спам-письмах, кол-во встреч не в спам письмах]}
+# счётчик для спамовых писем
+spamCnt = 0
+# словарь формата {слово : [кол-во встреч в спам-письмах, кол-во встреч не в спам письмах]}
+cntDict = dict()
 
-def isSpamWord(numOfSpam,numOfLet=lettersCnt):
+
+def isSpamWord(spam_number: int, letters_number: int = lettersCnt) -> float:
     '''
     numOfLet = по дефолту всем письмам
-    Возвращает вероятноть того, что слово является спамовым + используется сглаживание Лапласа.
+    Возвращает вероятноть того, что слово является спамовым.
     '''
-    return (numOfSpam+1)/(numOfLet+2)
+    # используется сглаживание Лапласа
+    return (spam_number+1)/(letters_number+2)
 
 
-def isSpamLetter(letter):
+def isSpamLetter(words: set[str]) -> bool:
     '''
-    Возвращает одно из значений: true, false.
-    True, если вероятность того, что оно спам > вероятности, что не спам.
+    Возвращает True, если вероятность того, что письмо спам > вероятности, что не спам.
     False, в обратном случае.
     '''
-    spamProb = math.log(spamCnt/lettersCnt)
-    hamProb = math.log((lettersCnt-spamCnt)/lettersCnt)
-    for word in letter:
-        nums = wordDict.get(word)
-        if nums is None:
-            nums = [1, 1]
-        spamProb += math.log(isSpamWord(nums[0], spamCnt))
-        hamProb += math.log(isSpamWord(nums[1], spamCnt))
+    spam_robability = log(spamCnt/lettersCnt)
+    ham_probability = log((lettersCnt-spamCnt)/lettersCnt)
+    for word in words:
+        word_counts = cntDict.get(word)
+        if word_counts is None:
+            word_counts = [1, 1]
+        spam_robability += log(isSpamWord(word_counts[0], spamCnt))
+        ham_probability += log(isSpamWord(word_counts[1], spamCnt))
 
-    return spamProb>hamProb
+    return spam_robability > ham_probability
 
 
-def readLetters(inp):
+def readLetters(input: str) -> list[str]:
     '''
     Считывает и возвращает список писем. Увеличивает счётчик количества писем.
     '''
     global lettersCnt
-    with open(inp, 'r', encoding='utf-8') as fin:
+    with open(input, 'r', encoding='utf-8') as fin:
         data = fin.read()
     letters = data.split('\n')
     lettersCnt += len(letters)
     return letters
 
 
-def learn(inp):
+def train(input: str):
     """
-    "обучает", используя полученные данные.
+    "Обучает", используя полученные тренировочные данные.
     """
     global spamCnt
-    letters = readLetters(inp)#получаем список писем
-    lenLets = len(letters)
-    for i in range(lenLets):
-        tmp = letters[i].split('\t', 1)
-        if tmp[0] == "spam":
+    letters = readLetters(input)  # получаем список писем
+    for letter in letters:
+        split_data = letter.split('\t', 1)
+        if split_data[0] == "spam":
             spamCnt += 1
-        words = set(re.sub(r'[.,"\'-?:!;]', '', tmp[1].lower()).split())#разбиваем письмо на слова
+
+        # разбиваем текст письма на слова
+        words = set(re.sub(r'[.,"\'-?:!;]', '', split_data[1].lower()).split())
+        # заполняем словарь количеством спама и не спама
         for word in words:
-            nums = wordDict.get(word)
-            if nums is None:
-                nums = [0, 0]
-            if tmp[0] == "spam":
-                nums[0] += 1
+            word_counts = cntDict.get(word)
+            if word_counts is None:
+                word_counts = [0, 0]
+            if split_data[0] == "spam":
+                word_counts[0] += 1
             else:
-                nums[1] += 1
-            wordDict.update({word: nums})
+                word_counts[1] += 1
+            cntDict.update({word: word_counts})
 
 
-def work(inp):
+def test(input: str):
     """
-    высчитывает процент правильно классифицированных писем.
+    Высчитывает процент правильно классифицированных писем,
+    используя тестовые данные, отличающиеся от тренировочных.
     """
-    trueCnt =0 
-    letters = readLetters(inp)#получаем список писем
-    lenLets = len(letters)
-    for i in range(lenLets):
-        tmp = letters[i].split('\t', 1) 
-        words = set(re.sub(r'[.,"\'-?:!;]', '', tmp[1].lower()).split())#разбиваем письмо на слова
-        if (tmp[0]=="spam") == (isSpamLetter(words)):
-            trueCnt+=1
-    print(f"Accuracy: {trueCnt/lenLets*100}%")
+    truePredictonCnt = 0
+    letters = readLetters(input)  # получаем список писем
+    for letter in letters:
+        split_data = letter.split('\t', 1)
+        # разбиваем текст письма на слова
+        words = set(re.sub(r'[.,"\'-?:!;]', '', split_data[1].lower()).split())
+        if (split_data[0] == "spam") == (isSpamLetter(words)):
+            truePredictonCnt += 1
+    # вычисляем долю верно определенных среди всех писем
+    print(f"Accuracy: {truePredictonCnt/len(letters):.3%}")
 
 
 if __name__ == "__main__":
-    learn("learnInp.txt")
-    work("chekInp.txt")
+    train("data\\train_data.txt")
+    test("data\\test_data.txt")
